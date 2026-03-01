@@ -1,0 +1,57 @@
+/* ==================== Design Tokens ==================== */
+:root {
+  --bg-base: #f6f8fa;
+  --bg-card: #ffffff;
+  --bg-sidebar: #ffffff;
+  --bg-header: rgba(255, 255, 255, 0.75);
+  --bg-hover: #f1f5f9;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --text-sidebar: #475569;
+  --border-color: #e2e8f0;
+  --primary: #4f46e5;
+  --primary-hover: #4338ca;
+  --primary-light: #e0e7ff;
+  --success: #059669;
+  --success-light: #d1fae5;
+  --warning: #d97706;
+  --warning-light: #fef3c7;
+  --danger: #dc2626;
+  --danger-light: #fee2e2;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --sidebar-w: 260px;
+  --header-h: 70px;
+  --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --hm-empty: #ebedf0;
+  --hm-l1: #9be9a8;
+  --hm-l2: #40c463;
+  --hm-l3: #30a14e;
+  --hm-l4: #216e39;
+  --bottom-nav-h: 64px;
+}
+
+[data-theme="dark"] {
+  --bg-base: #0f172a;
+  --bg-card: #1e293b;
+  --bg-sidebar: #1e293b;
+  --bg-header: rgba(30, 41, 59, 0.75);
+  --bg-hover: #334155;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --text-sidebar: #cbd5e1;
+  --border-color: #334155;
+  --primary-light: rgba(79, 70, 229, 0.2);
+  --success-light: rgba(5, 150, 105, 0.2);
+  --warning-light: rgba(217, 119, 6, 0.2);
+  --danger-light: rgba(220, 38, 38, 0.2);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  --hm-empty: #161b22;
+  --hm-l1: #0e4429;
+  --hm-l2: #006d32;
+  --hm-l3: #26a641;
+  --hm-l4: #39d353;
+}

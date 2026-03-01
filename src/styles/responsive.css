@@ -1,0 +1,274 @@
+/* ==================== Responsive ==================== */
+
+/* Tablet (769px - 1024px) */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 220px;
+  }
+
+  .main-content {
+    margin-left: 220px;
+  }
+
+  .dash-charts-grid,
+  .fin-charts-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .dash-bottom-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .memo-masonry {
+    columns: 2 280px;
+  }
+}
+
+/* Mobile (≤768px) */
+@media (max-width: 768px) {
+  :root {
+    --sidebar-w: 260px;
+  }
+
+  /* Sidebar becomes drawer */
+  .sidebar {
+    transform: translateX(-100%);
+    width: var(--sidebar-w);
+    box-shadow: var(--shadow-md);
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .sidebar-overlay.active {
+    display: block;
+  }
+
+  .sidebar-toggle {
+    display: flex;
+  }
+
+  /* Main content full width */
+  .main-content {
+    margin-left: 0;
+    padding-bottom: var(--bottom-nav-h);
+  }
+
+  /* Bottom navigation */
+  .bottom-nav {
+    display: flex;
+  }
+
+  /* Header */
+  .header {
+    padding: 0 16px;
+    height: 56px;
+  }
+
+  .header-welcome {
+    display: none;
+  }
+
+  .header-actions .btn span.btn-text {
+    display: none;
+  }
+
+  /* Views */
+  .view {
+    padding: 16px;
+  }
+
+  .view-title {
+    font-size: 1.4rem;
+  }
+
+  /* Dashboard grids */
+  .dash-stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 8px;
+  }
+
+  .dash-charts-grid,
+  .fin-charts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dash-bottom-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Finance stats */
+  .fin-stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 8px;
+  }
+
+  .fin-filter-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .fin-filter-controls {
+    flex-wrap: wrap;
+  }
+
+  /* Focus layout */
+  .focus-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Calendar */
+  .cal-cell {
+    min-height: 60px;
+    padding: 4px;
+  }
+
+  .cal-date {
+    font-size: 0.75rem;
+  }
+
+  .cal-task {
+    font-size: 0.6rem;
+    padding: 2px 4px;
+  }
+
+  .cal-header {
+    padding: 8px 4px;
+    font-size: 0.75rem;
+  }
+
+  /* Memos */
+  .memo-masonry {
+    columns: 1;
+  }
+
+  /* Modal full screen */
+  .modal-content {
+    max-width: 100%;
+    max-height: 100vh;
+    height: 100vh;
+    border-radius: 0;
+  }
+
+  .modal-backdrop {
+    padding: 0;
+  }
+
+  /* Touch targets */
+  .btn {
+    min-height: 44px;
+    padding: 10px 16px;
+  }
+
+  .btn-icon {
+    width: 44px;
+    height: 44px;
+  }
+
+  .custom-check {
+    width: 24px;
+    height: 24px;
+  }
+
+  .nav-item {
+    padding: 12px 16px;
+    min-height: 44px;
+  }
+
+  /* Tabs scrollable */
+  .tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    flex-wrap: nowrap;
+  }
+
+  .tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tab {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* Card padding */
+  .card {
+    padding: 16px;
+  }
+
+  /* Stat number */
+  .stat-number {
+    font-size: 1.5rem;
+  }
+
+  /* Habit stats */
+  .habit-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  /* Task filter */
+  .task-filter-row {
+    flex-direction: column;
+  }
+
+  /* Paper filter */
+  .paper-filter-row {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  /* Form row */
+  .form-row {
+    flex-direction: column;
+  }
+
+  /* Graph container */
+  .graph-container {
+    min-height: 350px;
+  }
+
+  /* Topo */
+  .topo-level {
+    min-width: 240px;
+  }
+
+  /* Toast position above bottom nav */
+  .toast-container {
+    bottom: calc(var(--bottom-nav-h) + 16px);
+    right: 16px;
+    left: 16px;
+  }
+
+  .toast {
+    font-size: 0.85rem;
+  }
+
+  /* Pomodoro display */
+  .pomo-display {
+    font-size: 3.5rem !important;
+  }
+}
+
+/* Small phones */
+@media (max-width: 375px) {
+  .dash-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .view {
+    padding: 12px;
+  }
+
+  .view-title {
+    font-size: 1.2rem;
+  }
+
+  .stat-number {
+    font-size: 1.2rem;
+  }
+}

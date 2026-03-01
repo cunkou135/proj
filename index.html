@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TaskFlow Pro | PhD Research OS</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Login Page -->
+  <div id="login-page" class="login-page" style="display:none"></div>
+
+  <!-- App Shell -->
+  <div id="app-shell" style="display:flex;width:100%">
+    <!-- Sidebar Overlay (mobile) -->
+    <div class="sidebar-overlay"></div>
+
+    <aside class="sidebar">
+      <div class="logo">
+        <div class="logo-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+          </svg>
+        </div>
+        TaskFlow Pro
+      </div>
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-view="dashboard"><span>📊 控制台</span></button>
+        <button class="nav-item" data-view="tasks"><span>📋 待办事项 & 拓扑</span></button>
+        <button class="nav-item" data-view="habits"><span>🔥 习惯热力打卡</span></button>
+        <button class="nav-item" data-view="library"><span>📚 文献 & 备忘录</span></button>
+        <button class="nav-item" data-view="milestones"><span>🏔️ 学术里程碑</span></button>
+        <button class="nav-item" data-view="focus"><span>🎯 深度专注域</span></button>
+        <button class="nav-item" data-view="finance"><span>💰 财务管理</span></button>
+      </nav>
+      <div class="sidebar-footer">
+        <button class="btn btn-ghost" id="themeBtn">🌙 主题</button>
+        <button class="btn btn-ghost" id="exportBtn">📤 导出</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <!-- Mobile Sidebar Toggle -->
+      <button class="sidebar-toggle">☰</button>
+
+      <header class="header">
+        <div class="header-left">
+          <span class="header-welcome" style="font-weight:600;font-size:1.1rem;color:var(--text-muted)">欢迎回来，研究者</span>
+        </div>
+        <div class="header-right" style="display:flex;gap:12px;align-items:center">
+          <button class="btn btn-ghost" id="reportBtn" style="border:1px solid var(--border-color)">📝 <span class="btn-text">生成本周汇报</span></button>
+          <button class="btn btn-primary" id="newTaskBtn">+ <span class="btn-text">新建待办</span></button>
+          <div class="user-info">
+            <img class="user-avatar" id="userAvatar" src="" alt="" style="display:none">
+            <span class="user-name" id="userName"></span>
+            <button class="btn btn-ghost" id="logoutBtn" style="display:none">退出</button>
+          </div>
+        </div>
+      </header>
+
+      <!-- ===== Dashboard ===== -->
+      <section class="view active" id="view-dashboard">
+        <div class="view-header"><h1 class="view-title">全局态势感知</h1></div>
+        <div class="dash-stats-grid">
+          <div class="card"><div class="stat-number" style="color:var(--text-main)" id="statTotal">0</div><div class="stat-label">全部待办</div></div>
+          <div class="card"><div class="stat-number" style="color:var(--warning)" id="statTodo">0</div><div class="stat-label">待启动</div></div>
+          <div class="card"><div class="stat-number" style="color:var(--primary)" id="statProg">0</div><div class="stat-label">进行中</div></div>
+          <div class="card"><div class="stat-number" style="color:var(--success)" id="statDone">0</div><div class="stat-label">已完成</div></div>
+          <div class="card"><div class="stat-number" style="color:var(--danger)" id="statDdl">0</div><div class="stat-label">已超期</div></div>
+          <div class="card"><div class="stat-number" style="color:var(--primary)" id="statPomo">0</div><div class="stat-label">本周番茄</div></div>
+          <div class="card"><div class="stat-number" style="color:var(--success)" id="statHabitRate">-</div><div class="stat-label">今日习惯</div></div>
+        </div>
+        <div class="dash-charts-grid">
+          <div class="card"><h2 style="font-size:1rem;margin-bottom:12px;">📊 任务分布</h2><div class="dash-chart-wrap"><canvas id="taskChart"></canvas></div></div>
+          <div class="card"><h2 style="font-size:1rem;margin-bottom:12px;">🔥 近7日专注趋势</h2><div class="dash-chart-wrap"><canvas id="focusTrendChart"></canvas></div></div>
+        </div>
+        <div class="dash-bottom-grid">
+          <div class="card"><h2 style="font-size:1rem;margin-bottom:12px;">🚨 紧急 DDL</h2><div id="dashDdlList" class="item-list" style="max-height:220px"></div></div>
+          <div class="card"><h2 style="font-size:1rem;margin-bottom:12px;">🎯 今日习惯</h2><div id="dashHabitList" class="item-list" style="max-height:220px"></div></div>
+          <div class="card"><h2 style="font-size:1rem;margin-bottom:12px;">📝 最近待办</h2><div id="dashRecentList" class="item-list" style="max-height:220px"></div></div>
+        </div>
+      </section>
+
+      <!-- ===== Tasks ===== -->
+      <section class="view" id="view-tasks">
+        <div class="view-header"><h1 class="view-title">待办事项管理</h1><button class="btn btn-primary" id="newTaskBtn2" onclick="document.querySelector('#newTaskBtn').click()">新增待办</button></div>
+        <div class="tabs">
+          <button class="tab active" data-pane="list">📋 列表视图</button>
+          <button class="tab" data-pane="topo">🕸️ 依赖拓扑</button>
+          <button class="tab" data-pane="cal">📅 热力日历</button>
+        </div>
+        <div class="tab-pane active" id="pane-tasks-list">
+          <div class="task-filter-row">
+            <select id="filterStatus" style="width:150px">
+              <option value="">所有状态</option>
+              <option value="todo">待办</option>
+              <option value="in-progress">进行中</option>
+              <option value="done">已完成</option>
+            </select>
+          </div>
+          <div id="taskList" class="item-list" style="max-height:65vh"></div>
+        </div>
+        <div class="tab-pane" id="pane-tasks-topo">
+          <p style="color:var(--text-muted);margin-bottom:16px;">基于前置依赖自动计算深度。红色高亮=被阻塞。</p>
+          <div id="topoGraph" class="topo-container"></div>
+        </div>
+        <div class="tab-pane" id="pane-tasks-cal">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <h2 id="calMonthTitle" style="font-size:1.2rem;"></h2>
+            <div>
+              <button class="btn btn-ghost" id="calPrev">◀ 上月</button>
+              <button class="btn btn-ghost" id="calNext">下月 ▶</button>
+            </div>
+          </div>
+          <div class="calendar-grid">
+            <div class="cal-header">周日</div><div class="cal-header">周一</div><div class="cal-header">周二</div>
+            <div class="cal-header">周三</div><div class="cal-header">周四</div><div class="cal-header">周五</div><div class="cal-header">周六</div>
+          </div>
+          <div class="calendar-grid" id="calBody" style="margin-top:-1px;"></div>
+          <div class="cal-legend">
+            <span>专注时长:</span>
+            <div class="swatch" style="background:var(--hm-empty)"></div><span>0</span>
+            <div class="swatch" style="background:var(--hm-l1)"></div><span>≤25m</span>
+            <div class="swatch" style="background:var(--hm-l2)"></div><span>≤75m</span>
+            <div class="swatch" style="background:var(--hm-l3)"></div><span>≤125m</span>
+            <div class="swatch" style="background:var(--hm-l4)"></div><span>>125m</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Habits ===== -->
+      <section class="view" id="view-habits">
+        <div class="view-header"><h1 class="view-title">习惯热力打卡</h1><button class="btn btn-primary" id="newHabitBtn">新增习惯</button></div>
+        <div class="habit-stats-grid">
+          <div class="card"><div class="stat-number" style="color:var(--primary)" id="habitStatToday">0</div><div class="stat-label">今日番茄</div></div>
+          <div class="card"><div class="stat-number" style="color:var(--success)" id="habitStatWeek">0</div><div class="stat-label">本周番茄</div></div>
+          <div class="card"><div class="stat-number" style="color:var(--text-main)" id="habitStatTotal">0</div><div class="stat-label">累计番茄</div></div>
+          <div class="card"><div class="stat-number" style="color:var(--warning)" id="habitStatHours">0h</div><div class="stat-label">累计专注时长</div></div>
+        </div>
+        <div class="card" style="margin-bottom:24px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <h2 style="font-size:1.1rem;">🔥 每日专注热力图</h2>
+            <div style="font-size:0.8rem;color:var(--text-muted)" id="heatmapSummary"></div>
+          </div>
+          <div id="focusHeatmap"></div>
+        </div>
+        <div id="habitsContainer"></div>
+      </section>
+
+      <!-- ===== Library ===== -->
+      <section class="view" id="view-library">
+        <div class="view-header"><h1 class="view-title">知识大脑</h1></div>
+        <div class="tabs">
+          <button class="tab active" data-pane="papers">📑 论文追踪</button>
+          <button class="tab" data-pane="memos">💡 快速备忘</button>
+          <button class="tab" data-pane="graph">🕸️ 知识图谱</button>
+        </div>
+        <div class="tab-pane active" id="pane-library-papers">
+          <div class="paper-filter-row">
+            <div class="paper-filter-left">
+              <select id="paperFilter" style="width:160px">
+                <option value="">全部状态</option>
+                <option value="unread">未读</option>
+                <option value="reading">在读</option>
+                <option value="deep-read">精读</option>
+                <option value="read">已读</option>
+              </select>
+              <span style="font-size:0.85rem;color:var(--text-muted)" id="paperStats"></span>
+            </div>
+            <button class="btn btn-primary" id="newPaperBtn">录入论文</button>
+          </div>
+          <div id="paperList" class="item-list"></div>
+        </div>
+        <div class="tab-pane" id="pane-library-memos">
+          <div style="margin-bottom:16px"><button class="btn btn-primary" id="newMemoBtn">写备忘录</button></div>
+          <div class="memo-masonry" id="memoMasonry"></div>
+        </div>
+        <div class="tab-pane" id="pane-library-graph">
+          <div class="graph-toolbar">
+            <div class="graph-legend">
+              <span class="graph-legend-dot" style="background:var(--primary)"></span>论文
+              <span class="graph-legend-dot" style="background:var(--success)"></span>备忘
+              <span class="graph-legend-dot" style="background:var(--warning)"></span>任务
+            </div>
+            <select id="graphFilter" style="width:140px">
+              <option value="">全部类型</option>
+              <option value="paper">仅论文</option>
+              <option value="memo">仅备忘</option>
+              <option value="task">仅任务</option>
+            </select>
+          </div>
+          <div class="graph-container" id="graphContainer">
+            <svg id="graphSvg"></svg>
+            <div id="graphNodes"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Milestones ===== -->
+      <section class="view" id="view-milestones">
+        <div class="view-header">
+          <div>
+            <h1 class="view-title">长线科研里程碑</h1>
+            <p style="color:var(--text-muted);margin-top:4px;font-size:0.9rem;">以原子任务为驱动，消解 DDL 带来的纯粹时间焦虑。</p>
+          </div>
+          <button class="btn btn-primary" id="newMilestoneBtn">设立里程碑</button>
+        </div>
+        <div class="card"><div class="timeline" id="milestoneTimeline"></div></div>
+      </section>
+
+      <!-- ===== Focus ===== -->
+      <section class="view" id="view-focus">
+        <div class="view-header">
+          <h1 class="view-title">深度专注域</h1>
+          <button class="btn btn-ghost" id="zenBtn" style="border:1px solid var(--border-color)">🧘 进入禅定模式</button>
+        </div>
+        <div class="focus-grid">
+          <div class="card zen-focus-card" style="text-align:center;padding:60px 20px;">
+            <div class="pomo-display" style="font-size:5rem;font-family:'JetBrains Mono',monospace;font-weight:800;color:var(--primary);line-height:1;margin-bottom:24px;" id="pomoDisplay">25:00</div>
+            <div style="margin-bottom:32px;font-weight:600;color:var(--text-muted)" id="pomoCurrentTask">请先在右侧选择/创建专注任务</div>
+            <div style="display:flex;justify-content:center;gap:16px;">
+              <button class="btn btn-primary" id="pomoStartBtn">开始专注</button>
+              <button class="btn btn-danger" id="pomoStopBtn" style="display:none">结束/放弃</button>
+            </div>
+          </div>
+          <div class="zen-hide">
+            <div class="card" style="margin-bottom:16px">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+                <h3 style="font-size:1rem">专注目标</h3>
+                <button class="btn btn-ghost" id="newPomoTaskBtn" style="padding:4px 8px;font-size:0.85rem">+ 添加</button>
+              </div>
+              <div id="pomoTaskList" class="item-list" style="max-height:180px"></div>
+            </div>
+            <div class="card">
+              <h3 style="font-size:1rem;margin-bottom:12px">今日统计</h3>
+              <div id="pomoTodayStats" style="color:var(--text-muted);font-size:0.9rem"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Finance ===== -->
+      <section class="view" id="view-finance">
+        <div class="view-header"><h1 class="view-title">财务管理</h1><button class="btn btn-primary" id="newFinBtn">+ 记一笔</button></div>
+        <div class="fin-stats-grid">
+          <div class="card"><div class="stat-number" style="color:var(--success)" id="finIncome">¥0</div><div class="stat-label">总收入</div></div>
+          <div class="card"><div class="stat-number" style="color:var(--danger)" id="finExpense">¥0</div><div class="stat-label">总支出</div></div>
+          <div class="card"><div class="stat-number" style="color:var(--primary)" id="finBalance">¥0</div><div class="stat-label">净余额</div></div>
+          <div class="card"><div class="stat-number" style="color:var(--warning)" id="finReimburse">¥0</div><div class="stat-label">待报账</div></div>
+          <div class="card"><div class="stat-number" style="color:var(--success)" id="finReimbursedAmt">¥0</div><div class="stat-label">已报账</div></div>
+        </div>
+        <div class="fin-charts-grid">
+          <div class="card"><h2 style="font-size:1rem;margin-bottom:12px">📊 月度收支趋势</h2><div class="dash-chart-wrap"><canvas id="finMonthChart"></canvas></div></div>
+          <div class="card"><h2 style="font-size:1rem;margin-bottom:12px">📊 支出分类占比</h2><div class="dash-chart-wrap"><canvas id="finCatChart"></canvas></div></div>
+        </div>
+        <div class="card">
+          <div class="fin-filter-row">
+            <h2 style="font-size:1rem">账单明细</h2>
+            <div class="fin-filter-controls">
+              <select id="finTypeFilter" style="width:120px">
+                <option value="">全部类型</option>
+                <option value="income">收入</option>
+                <option value="expense">支出</option>
+                <option value="reimburse">报账</option>
+              </select>
+              <select id="finMonthFilter" style="width:120px"><option value="">全部月份</option></select>
+            </div>
+          </div>
+          <div id="finList" class="item-list" style="max-height:50vh"></div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Bottom Navigation (mobile) -->
+    <nav class="bottom-nav">
+      <button class="bottom-nav-item active" data-view="dashboard">
+        <span class="bottom-nav-icon">📊</span>
+        <span>控制台</span>
+      </button>
+      <button class="bottom-nav-item" data-view="tasks">
+        <span class="bottom-nav-icon">📋</span>
+        <span>待办</span>
+      </button>
+      <button class="bottom-nav-item" data-view="habits">
+        <span class="bottom-nav-icon">🔥</span>
+        <span>习惯</span>
+      </button>
+      <button class="bottom-nav-item" data-view="focus">
+        <span class="bottom-nav-icon">🎯</span>
+        <span>专注</span>
+      </button>
+      <button class="bottom-nav-item" data-view="finance">
+        <span class="bottom-nav-icon">💰</span>
+        <span>财务</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- ===== Modals ===== -->
+  <div class="modal-backdrop" id="taskModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="taskModalTitle">新建待办事项</h2>
+        <button class="btn-icon" data-close-modal="taskModal">✕</button>
+      </div>
+      <form id="taskForm">
+        <div class="modal-body">
+          <input type="hidden" id="taskId">
+          <div>
+            <label class="form-label">任务名称 *</label>
+            <input type="text" id="taskTitle" required placeholder="输入待办事项名称">
+          </div>
+          <div>
+            <label class="form-label">备注</label>
+            <textarea id="taskDesc" rows="2" placeholder="可选补充说明..."></textarea>
+          </div>
+          <div class="form-row">
+            <div>
+              <label class="form-label">优先级</label>
+              <select id="taskPriority">
+                <option value="low">低</option>
+                <option value="medium">中</option>
+                <option value="high">高(P0)</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label">状态</label>
+              <select id="taskStatus">
+                <option value="todo">待办</option>
+                <option value="in-progress">进行中</option>
+                <option value="done">已完成</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div>
+              <label class="form-label">截止日期</label>
+              <input type="date" id="taskDeadline">
+            </div>
+            <div>
+              <label class="form-label">关联里程碑</label>
+              <select id="taskMilestone"></select>
+            </div>
+          </div>
+          <div>
+            <label class="form-label">前置依赖(Ctrl多选)</label>
+            <select id="taskDependsOn" multiple style="height:90px;background:var(--bg-hover)"></select>
+          </div>
+          <div id="taskBacklinks"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" data-close-modal="taskModal">取消</button>
+          <button type="submit" class="btn btn-primary">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="habitModal">
+    <div class="modal-content" style="max-width:400px">
+      <div class="modal-header">
+        <h2>设定新习惯</h2>
+        <button class="btn-icon" data-close-modal="habitModal">✕</button>
+      </div>
+      <form id="habitForm">
+        <div class="modal-body">
+          <div><label class="form-label">习惯名称 *</label><input type="text" id="habitName" required placeholder="例如: 每日读一篇Arxiv"></div>
+          <div><label class="form-label">颜色</label><input type="color" id="habitColor" value="#059669" style="height:40px;padding:2px"></div>
+        </div>
+        <div class="modal-footer"><button type="submit" class="btn btn-primary">创建</button></div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="paperModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>文献入库</h2>
+        <button class="btn-icon" data-close-modal="paperModal">✕</button>
+      </div>
+      <form id="paperForm">
+        <div class="modal-body">
+          <input type="hidden" id="paperId">
+          <div><label class="form-label">论文标题 *</label><input type="text" id="paperTitle" required></div>
+          <div class="form-row">
+            <div style="flex:2"><label class="form-label">作者</label><input type="text" id="paperAuthors"></div>
+            <div style="flex:1"><label class="form-label">年份</label><input type="number" id="paperYear"></div>
+          </div>
+          <div class="form-row">
+            <div><label class="form-label">期刊/会议</label><input type="text" id="paperSource"></div>
+            <div><label class="form-label">链接</label><input type="url" id="paperUrl"></div>
+          </div>
+          <div class="form-row">
+            <div>
+              <label class="form-label">阅读状态</label>
+              <select id="paperStatus">
+                <option value="unread">未读</option>
+                <option value="reading">在读</option>
+                <option value="deep-read">精读</option>
+                <option value="read">已读</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label">评分</label>
+              <select id="paperRating">
+                <option value="0">未评级</option>
+                <option value="1">1星</option>
+                <option value="2">2星</option>
+                <option value="3">3星</option>
+                <option value="4">4星</option>
+                <option value="5">5星</option>
+              </select>
+            </div>
+          </div>
+          <div><label class="form-label">标签</label><input type="text" id="paperTags" placeholder="逗号分隔"></div>
+          <div><label class="form-label">笔记</label><textarea id="paperNotes" rows="3"></textarea></div>
+          <div id="paperBacklinks"></div>
+        </div>
+        <div class="modal-footer"><button type="submit" class="btn btn-primary">归档</button></div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="memoModal">
+    <div class="modal-content" style="max-width:700px">
+      <div class="modal-header">
+        <h2>编写备忘录 (Markdown)</h2>
+        <button class="btn-icon" data-close-modal="memoModal">✕</button>
+      </div>
+      <form id="memoForm">
+        <div class="modal-body">
+          <input type="hidden" id="memoId">
+          <div><label class="form-label">标题 *</label><input type="text" id="memoTitle" required></div>
+          <div><label class="form-label">标签</label><input type="text" id="memoTags" placeholder="逗号分隔"></div>
+          <div><label class="form-label">内容</label><textarea id="memoContent" rows="12" style="font-family:monospace"></textarea></div>
+        </div>
+        <div class="modal-footer"><button type="submit" class="btn btn-primary">保存</button></div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="memoDetailModal">
+    <div class="modal-content" style="max-width:700px">
+      <div class="modal-header">
+        <h2 id="mdViewTitle"></h2>
+        <button class="btn-icon" data-close-modal="memoDetailModal">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="mdViewTags" style="display:flex;gap:8px;margin-bottom:16px"></div>
+        <div id="mdViewContent" style="line-height:1.6;font-size:1rem;padding:16px;background:var(--bg-hover);border-radius:var(--radius-sm)"></div>
+        <div id="mdViewBacklinks"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="milestoneModal">
+    <div class="modal-content" style="max-width:500px">
+      <div class="modal-header">
+        <h2>设定里程碑</h2>
+        <button class="btn-icon" data-close-modal="milestoneModal">✕</button>
+      </div>
+      <form id="milestoneForm">
+        <div class="modal-body">
+          <input type="hidden" id="milestoneId">
+          <div><label class="form-label">名称 *</label><input type="text" id="msName" required></div>
+          <div><label class="form-label">描述</label><textarea id="milestoneDesc" rows="2" placeholder="填写描述..."></textarea></div>
+          <div class="form-row">
+            <div><label class="form-label">开始日期</label><input type="date" id="msStart" required></div>
+            <div><label class="form-label">目标日期 *</label><input type="date" id="msEnd" required></div>
+          </div>
+          <div class="form-row">
+            <div><label class="form-label">颜色</label><input type="color" id="msColor" value="#4f46e5" style="height:40px;padding:2px"></div>
+            <div>
+              <label class="form-label">状态</label>
+              <select id="msStatus">
+                <option value="pending">计划中</option>
+                <option value="in-progress">进行中</option>
+                <option value="done">已完成</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer"><button type="submit" class="btn btn-primary">保存</button></div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="pomoTaskModal">
+    <div class="modal-content" style="max-width:400px">
+      <div class="modal-header">
+        <h2>添加专注目标</h2>
+        <button class="btn-icon" data-close-modal="pomoTaskModal">✕</button>
+      </div>
+      <form id="pomoTaskForm">
+        <div class="modal-body">
+          <div><label class="form-label">目标名称 *</label><input type="text" id="pomoTaskName" required placeholder="例如：阅读 Section 3"></div>
+        </div>
+        <div class="modal-footer"><button type="submit" class="btn btn-primary">添加</button></div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="finModal">
+    <div class="modal-content" style="max-width:500px">
+      <div class="modal-header">
+        <h2 id="finModalTitle">记一笔</h2>
+        <button class="btn-icon" data-close-modal="finModal">✕</button>
+      </div>
+      <form id="finForm">
+        <div class="modal-body">
+          <input type="hidden" id="finId">
+          <div class="form-row">
+            <div>
+              <label class="form-label">类型 *</label>
+              <select id="finType">
+                <option value="expense">支出</option>
+                <option value="income">收入</option>
+                <option value="reimburse">报账</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label">金额 *</label>
+              <input type="number" id="finAmount" required min="0.01" step="0.01" placeholder="0.00">
+            </div>
+          </div>
+          <div class="form-row">
+            <div><label class="form-label">分类</label><select id="finCat"></select></div>
+            <div><label class="form-label">日期</label><input type="date" id="finDate"></div>
+          </div>
+          <div><label class="form-label">描述</label><input type="text" id="finDesc" placeholder="简要描述"></div>
+          <div id="finReimburseRow" style="display:none">
+            <label class="form-label"><input type="checkbox" id="finReimbursed" style="width:auto;margin-right:8px">已报账到账</label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" data-close-modal="finModal">取消</button>
+          <button type="submit" class="btn btn-primary">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="reportModal">
+    <div class="modal-content" style="max-width:700px">
+      <div class="modal-header">
+        <h2>📝 本周汇报</h2>
+        <button class="btn-icon" data-close-modal="reportModal">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="reportContent" class="report-content"></div>
+        <div class="report-actions">
+          <button class="btn btn-ghost" data-close-modal="reportModal">关闭</button>
+          <button class="btn btn-primary" id="copyReportBtn">📋 复制到剪贴板</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Zen Mode Exit Button -->
+  <button class="zen-exit-btn">Esc 退出禅定</button>
+
+  <div id="wikiAutocomplete" class="wiki-autocomplete"></div>
+  <div id="toast-container" class="toast-container"></div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
