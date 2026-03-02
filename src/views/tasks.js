@@ -15,7 +15,14 @@ export function renderTasks() {
     ? list.map((t) => {
         const ms = data.milestones.find((m) => m.id === t.milestoneId);
         const pc = t.priority === 'high' ? 'var(--danger)' : t.priority === 'medium' ? 'var(--warning)' : 'transparent';
-        return '<div class="list-item" style="border-left:4px solid ' + pc + '"><input type="checkbox" class="custom-check" data-action="toggleTask" data-id="' + t.id + '" ' + (t.status === 'done' ? 'checked' : '') + '><div class="item-content" data-action="editTask" data-id="' + t.id + '"><div class="item-title" style="' + (t.status === 'done' ? 'text-decoration:line-through;opacity:.6' : '') + '">' + esc(t.title) + '</div>' + (t.desc ? '<div style="font-size:0.8rem;color:var(--text-muted);margin-top:2px">' + esc(t.desc).substring(0, 80) + '</div>' : '') + '<div class="item-meta"><span class="badge badge-outline">' + (stL[t.status] || t.status) + '</span><span style="color:' + (pc === 'transparent' ? 'var(--text-muted)' : pc) + '">' + (priL[t.priority] || '') + '</span>' + (t.deadline ? '<span class="badge badge-outline">DDL:' + t.deadline + '</span>' : '') + (ms ? '<span style="color:var(--primary);font-size:0.75rem">⛳ ' + esc(ms.name) + '</span>' : '') + '</div></div><button class="btn-icon" data-action="delTask" data-id="' + t.id + '">✕</button></div>';
+        const subs = t.subtasks || [];
+        const stTotal = subs.length;
+        const stDone = subs.filter((s) => s.done).length;
+        const stPct = stTotal > 0 ? Math.round((stDone / stTotal) * 100) : 0;
+        const subtaskHtml = stTotal > 0
+          ? '<div style="margin-top:6px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span style="font-size:0.75rem;color:var(--text-muted)">' + stDone + '/' + stTotal + '</span><div class="progress-bar-bg" style="flex:1;height:4px"><div class="progress-bar-fill" style="width:' + stPct + '%;background:var(--success)"></div></div></div>' + subs.map((s) => '<div style="display:flex;align-items:center;gap:6px;padding:2px 0"><input type="checkbox" ' + (s.done ? 'checked' : '') + ' data-action="toggleSubtaskList" data-task-id="' + t.id + '" data-subtask-id="' + s.id + '" style="width:auto"><span style="font-size:0.8rem;' + (s.done ? 'text-decoration:line-through;opacity:.6' : '') + '">' + esc(s.title) + '</span></div>').join('') + '</div>'
+          : '';
+        return '<div class="list-item" style="border-left:4px solid ' + pc + '"><input type="checkbox" class="custom-check" data-action="toggleTask" data-id="' + t.id + '" ' + (t.status === 'done' ? 'checked' : '') + '><div class="item-content" data-action="editTask" data-id="' + t.id + '"><div class="item-title" style="' + (t.status === 'done' ? 'text-decoration:line-through;opacity:.6' : '') + '">' + esc(t.title) + '</div>' + (t.desc ? '<div style="font-size:0.8rem;color:var(--text-muted);margin-top:2px">' + esc(t.desc).substring(0, 80) + '</div>' : '') + '<div class="item-meta"><span class="badge badge-outline">' + (stL[t.status] || t.status) + '</span><span style="color:' + (pc === 'transparent' ? 'var(--text-muted)' : pc) + '">' + (priL[t.priority] || '') + '</span>' + (t.deadline ? '<span class="badge badge-outline">DDL:' + t.deadline + '</span>' : '') + (ms ? '<span style="color:var(--primary);font-size:0.75rem">⛳ ' + esc(ms.name) + '</span>' : '') + '</div>' + subtaskHtml + '</div><button class="btn-icon" data-action="delTask" data-id="' + t.id + '">✕</button></div>';
       }).join('')
     : '<div style="color:var(--text-muted);padding:24px;text-align:center">暂无待办</div>';
 }
@@ -60,12 +67,14 @@ export function renderCal() {
   const todayStr = new Date().toISOString().split('T')[0];
 
   const pomoCnt = {};
+  const pomoMin = {};
   data.pomoRecords.forEach((r) => {
-    if (r.date && r.date.startsWith(y + '-' + (m + 1).toString().padStart(2, '0')))
+    if (r.date && r.date.startsWith(y + '-' + (m + 1).toString().padStart(2, '0'))) {
       pomoCnt[r.date] = (pomoCnt[r.date] || 0) + 1;
+      pomoMin[r.date] = (pomoMin[r.date] || 0) + (r.duration || 25);
+    }
   });
-  const focusLevel = (cnt) => {
-    const min = cnt * 25;
+  const focusLevel = (min) => {
     if (min === 0) return 0;
     if (min <= 25) return 1;
     if (min <= 75) return 2;
@@ -80,10 +89,11 @@ export function renderCal() {
     const isToday = ds === todayStr;
     const dt = data.tasks.filter((t) => t.deadline === ds);
     const pc = pomoCnt[ds] || 0;
-    const fl = focusLevel(pc);
+    const pm = pomoMin[ds] || 0;
+    const fl = focusLevel(pm);
     const hmCls = fl ? 'hm-' + fl : '';
     const tasksH = dt.map((t) => '<div class="cal-task" style="background:' + (t.status === 'done' ? 'var(--success)' : t.priority === 'high' ? 'var(--danger)' : 'var(--primary)') + '" data-action="editTask" data-id="' + t.id + '">' + esc(t.title) + '</div>').join('');
-    const focusBadge = pc ? '<div class="cal-focus-badge">' + pc + '🍅 ' + pc * 25 + 'm</div>' : '';
+    const focusBadge = pc ? '<div class="cal-focus-badge">' + pc + '🍅 ' + pm + 'm</div>' : '';
     html += '<div class="cal-cell ' + hmCls + '"><div class="cal-date ' + (isToday ? 'today' : '') + '">' + i + '</div>' + tasksH + focusBadge + '</div>';
   }
   qs('#calBody').innerHTML = html;

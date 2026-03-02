@@ -1,19 +1,19 @@
 import { qs, esc } from '../utils/dom.js';
 import { today } from '../utils/date.js';
 import { dataService } from '../data/data-service.js';
+import { totalFocusMinutes, totalPomoCount } from '../features/pomodoro-timer.js';
 
 export function renderHabits() {
   const data = dataService.getData();
   const td = today();
   const wk = new Date();
   wk.setDate(wk.getDate() - 7);
-  const todayP = data.pomoRecords.filter((r) => r.date === td).length;
-  const weekP = data.pomoRecords.filter((r) => new Date(r.date) >= wk).length;
-  const totalP = data.pomoRecords.length;
-  qs('#habitStatToday').innerText = todayP;
-  qs('#habitStatWeek').innerText = weekP;
-  qs('#habitStatTotal').innerText = totalP;
-  qs('#habitStatHours').innerText = Math.round((totalP * 25) / 60) + 'h';
+  const todayRecs = data.pomoRecords.filter((r) => r.date === td);
+  const weekRecs = data.pomoRecords.filter((r) => new Date(r.date) >= wk);
+  qs('#habitStatToday').innerText = totalPomoCount(todayRecs);
+  qs('#habitStatWeek').innerText = totalPomoCount(weekRecs);
+  qs('#habitStatTotal').innerText = totalPomoCount(data.pomoRecords);
+  qs('#habitStatHours').innerText = Math.round(totalFocusMinutes(data.pomoRecords) / 60) + 'h';
 
   renderFocusHeatmap();
 
@@ -76,12 +76,16 @@ function renderFocusHeatmap() {
   }
 
   const actMap = {};
-  data.pomoRecords.forEach((r) => { actMap[r.date] = (actMap[r.date] || 0) + 1; });
+  const minMap = {};
+  data.pomoRecords.forEach((r) => {
+    actMap[r.date] = (actMap[r.date] || 0) + 1;
+    minMap[r.date] = (minMap[r.date] || 0) + (r.duration || 25);
+  });
   data.habitLogs.forEach((l) => { actMap[l.date] = (actMap[l.date] || 0) + 1; });
 
   const cells = allDates.map((d) => {
     const ds = d.toISOString().split('T')[0];
-    return { date: ds, count: actMap[ds] || 0, dow: d.getDay(), month: d.getMonth(), day: d.getDate() };
+    return { date: ds, count: actMap[ds] || 0, minutes: minMap[ds] || 0, dow: d.getDay(), month: d.getMonth(), day: d.getDate() };
   });
   const maxC = Math.max(1, ...cells.map((c) => c.count));
   const lvl = (c) => {
@@ -126,13 +130,14 @@ function renderFocusHeatmap() {
         gHtml += '<div class="heatmap-cell" style="visibility:hidden"></div>';
       } else {
         const l = lvl(c.count);
-        const tip = c.date + ' (' + ['日', '一', '二', '三', '四', '五', '六'][c.dow] + ') — ' + c.count + '次 / ' + c.count * 25 + 'min';
+        const tip = c.date + ' (' + ['日', '一', '二', '三', '四', '五', '六'][c.dow] + ') — ' + c.count + '次 / ' + c.minutes + 'min';
         gHtml += '<div class="heatmap-cell level-' + l + '"><span class="hm-tooltip">' + tip + '</span></div>';
       }
     }
   }
 
+  const totalMin = cells.reduce((s, c) => s + c.minutes, 0);
   const totalAct = cells.reduce((s, c) => s + c.count, 0);
-  qs('#heatmapSummary').innerText = '过去一年共 ' + totalAct + ' 次活动 (' + Math.round((totalAct * 25) / 60) + ' 小时)';
+  qs('#heatmapSummary').innerText = '过去一年共 ' + totalAct + ' 次活动 (' + Math.round(totalMin / 60) + ' 小时)';
   el.innerHTML = '<div style="display:flex;gap:4px"><div style="display:flex;flex-direction:column;gap:3px;padding-top:20px"><span style="height:13px;line-height:13px;font-size:0.6rem;color:var(--text-muted);text-align:right;width:20px"></span><span style="height:13px;line-height:13px;font-size:0.6rem;color:var(--text-muted);text-align:right;width:20px">一</span><span style="height:13px;line-height:13px;font-size:0.6rem;color:var(--text-muted);text-align:right;width:20px"></span><span style="height:13px;line-height:13px;font-size:0.6rem;color:var(--text-muted);text-align:right;width:20px">三</span><span style="height:13px;line-height:13px;font-size:0.6rem;color:var(--text-muted);text-align:right;width:20px"></span><span style="height:13px;line-height:13px;font-size:0.6rem;color:var(--text-muted);text-align:right;width:20px">五</span><span style="height:13px;line-height:13px;font-size:0.6rem;color:var(--text-muted);text-align:right;width:20px"></span></div><div style="flex:1;overflow-x:auto;padding-bottom:8px"><div style="margin-bottom:4px">' + mHtml + '</div><div class="gh-heatmap-grid" style="grid-template-columns:repeat(' + numCols + ',13px)">' + gHtml + '</div></div></div><div style="display:flex;align-items:center;gap:4px;justify-content:flex-end;margin-top:8px;font-size:0.7rem;color:var(--text-muted)"><span>少</span><div style="width:13px;height:13px;border-radius:2px;background:var(--hm-empty)"></div><div style="width:13px;height:13px;border-radius:2px;background:var(--hm-l1)"></div><div style="width:13px;height:13px;border-radius:2px;background:var(--hm-l2)"></div><div style="width:13px;height:13px;border-radius:2px;background:var(--hm-l3)"></div><div style="width:13px;height:13px;border-radius:2px;background:var(--hm-l4)"></div><span>多</span></div>';
 }

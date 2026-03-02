@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS tasks (
   deadline DATE,
   milestone_id UUID,
   deps UUID[] DEFAULT '{}',
+  subtasks JSONB DEFAULT '[]',
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
@@ -83,6 +84,7 @@ CREATE TABLE IF NOT EXISTS pomo_records (
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   task_id UUID REFERENCES pomo_tasks(id) ON DELETE SET NULL,
   date DATE NOT NULL,
+  duration INTEGER NOT NULL DEFAULT 25,
   completed_at TIMESTAMPTZ DEFAULT now()
 );
 

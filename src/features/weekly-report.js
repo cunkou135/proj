@@ -2,6 +2,7 @@ import { qs, toast } from '../utils/dom.js';
 import { today } from '../utils/date.js';
 import { dataService } from '../data/data-service.js';
 import { openModal } from '../components/modal.js';
+import { totalFocusMinutes, totalPomoCount } from './pomodoro-timer.js';
 
 let lastReport = '';
 
@@ -18,11 +19,15 @@ export function generateWeeklyReport() {
   const progTasks = data.tasks.filter((t) => t.status === 'in-progress');
 
   const weekPomos = data.pomoRecords.filter((r) => inRange(r.date));
+  const weekMinutes = totalFocusMinutes(weekPomos);
+  const weekCount = totalPomoCount(weekPomos);
   const pomoByTask = {};
+  const minByTask = {};
   weekPomos.forEach((r) => {
     const t = data.pomoTasks.find((x) => x.id === r.taskId);
     const name = t ? t.title : '未知任务';
     pomoByTask[name] = (pomoByTask[name] || 0) + 1;
+    minByTask[name] = (minByTask[name] || 0) + (r.duration || 25);
   });
 
   const readPapers = data.papers.filter((p) => p.status === 'read');
@@ -32,7 +37,7 @@ export function generateWeeklyReport() {
   const weekHabitLogs = data.habitLogs.filter((l) => inRange(l.date));
   const habitCounts = {};
   weekHabitLogs.forEach((l) => {
-    const h = data.habits.find((x) => x.id === l.id);
+    const h = data.habits.find((x) => x.id === l.habitId);
     const name = h ? h.name : '未知';
     habitCounts[name] = (habitCounts[name] || 0) + 1;
   });
@@ -58,13 +63,13 @@ export function generateWeeklyReport() {
   if (!doneTasks.length && !progTasks.length) r += '_暂无任务记录_\n';
 
   r += '\n## 2. 深度专注\n';
-  r += '本周共完成 **' + weekPomos.length + ' 个番茄钟** (' + weekPomos.length * 25 + ' 分钟)\n';
+  r += '本周共完成 **' + weekCount + ' 个番茄钟** (' + weekMinutes + ' 分钟)\n';
   if (Object.keys(pomoByTask).length) {
     r += '\n| 专注目标 | 番茄数 | 时长 |\n|---------|--------|------|\n';
     Object.entries(pomoByTask)
       .sort((a, b) => b[1] - a[1])
       .forEach(([name, cnt]) => {
-        r += '| ' + name + ' | ' + cnt + ' | ' + cnt * 25 + 'min |\n';
+        r += '| ' + name + ' | ' + cnt + ' | ' + (minByTask[name] || cnt * 25) + 'min |\n';
       });
   }
 

@@ -442,6 +442,30 @@
   gap: 32px;
 }
 
+/* Pomo duration buttons */
+.pomo-dur-btn {
+  padding: 6px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-hover);
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.pomo-dur-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.pomo-dur-btn.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
 /* Task filter row */
 .task-filter-row {
   display: flex;

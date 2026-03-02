@@ -1,7 +1,7 @@
 import { qs, esc } from '../utils/dom.js';
 import { today } from '../utils/date.js';
 import { dataService } from '../data/data-service.js';
-import { getPomoState } from '../features/pomodoro-timer.js';
+import { getPomoState, totalFocusMinutes, totalPomoCount } from '../features/pomodoro-timer.js';
 
 export function renderPomo() {
   const data = dataService.getData();
@@ -14,7 +14,9 @@ export function renderPomo() {
 
   const td = today();
   const tp = data.pomoRecords.filter((r) => r.date === td);
+  const mins = totalFocusMinutes(tp);
+  const count = totalPomoCount(tp);
   qs('#pomoTodayStats').innerHTML = tp.length
-    ? '<div style="font-size:1.5rem;font-weight:800;color:var(--primary)">' + tp.length + '</div><div>个番茄 (' + tp.length * 25 + ' 分钟)</div>'
+    ? '<div style="font-size:1.5rem;font-weight:800;color:var(--primary)">' + count + '</div><div>个番茄 (' + mins + ' 分钟)</div>'
     : '今日暂无记录';
 }

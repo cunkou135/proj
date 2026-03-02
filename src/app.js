@@ -9,7 +9,7 @@ import { dataService } from './data/data-service.js';
 import { syncLinks, cleanLinks, renderBacklinksHTML, initAutocomplete } from './features/zettelkasten.js';
 import { renderGraph } from './features/knowledge-graph.js';
 import { generateWeeklyReport, copyReport } from './features/weekly-report.js';
-import { selectPomo, startPomo, stopPomo } from './features/pomodoro-timer.js';
+import { selectPomo, startPomo, stopPomo, setDuration } from './features/pomodoro-timer.js';
 import { enterZen, exitZen } from './features/zen-mode.js';
 import { renderDash } from './views/dashboard.js';
 import { renderTasks, renderTopo, renderCal, changeMonth, populateTaskOptions } from './views/tasks.js';
@@ -24,6 +24,50 @@ export function renderAll() {
   [renderDash, renderTasks, renderTopo, renderCal, renderHabits, renderPapers, renderMemos, renderGraph, renderMilestones, renderPomo, renderFinance].forEach((fn) => {
     try { fn(); } catch (e) { console.error(fn.name, e); }
   });
+}
+
+// ===== Subtask Management =====
+let currentSubtasks = [];
+
+function renderSubtaskEditor() {
+  const list = qs('#subtaskList');
+  if (!list) return;
+  list.innerHTML = currentSubtasks.map((st, i) =>
+    '<div style="display:flex;align-items:center;gap:8px;padding:4px 0"><input type="checkbox" ' + (st.done ? 'checked' : '') + ' data-action="toggleSubtaskEditor" data-idx="' + i + '" style="width:auto"><span style="flex:1;' + (st.done ? 'text-decoration:line-through;opacity:.6' : '') + '">' + esc(st.title) + '</span><button type="button" class="btn-icon" data-action="removeSubtask" data-idx="' + i + '" style="font-size:0.8rem">✕</button></div>'
+  ).join('');
+}
+
+function addSubtask() {
+  const inp = qs('#subtaskInput');
+  if (!inp) return;
+  const title = inp.value.trim();
+  if (!title) return;
+  currentSubtasks.push({ id: uuid(), title, done: false });
+  inp.value = '';
+  renderSubtaskEditor();
+}
+
+function removeSubtask(idx) {
+  currentSubtasks.splice(idx, 1);
+  renderSubtaskEditor();
+}
+
+function toggleSubtaskInEditor(idx) {
+  currentSubtasks[idx].done = !currentSubtasks[idx].done;
+  renderSubtaskEditor();
+}
+
+function toggleSubtaskInList(taskId, subtaskId) {
+  const data = dataService.getData();
+  const t = data.tasks.find((x) => x.id === taskId);
+  if (!t) return;
+  const subs = t.subtasks || [];
+  const st = subs.find((s) => s.id === subtaskId);
+  if (st) {
+    st.done = !st.done;
+    dataService.upsert('tasks', t);
+    renderAll();
+  }
 }
 
 function switchTab(v, t, btn) {
@@ -56,6 +100,8 @@ function openTaskModal() {
   qs('#taskPriority').value = 'medium';
   qs('#taskModalTitle').innerText = '新建待办事项';
   qs('#taskBacklinks').innerHTML = '';
+  currentSubtasks = [];
+  renderSubtaskEditor();
   populateTaskOptions();
   openModal('taskModal');
 }
@@ -72,6 +118,7 @@ function saveTask(e) {
     deadline: qs('#taskDeadline').value,
     milestoneId: qs('#taskMilestone').value,
     deps: Array.from(qs('#taskDependsOn').selectedOptions).map((o) => o.value),
+    subtasks: currentSubtasks,
   };
   dataService.upsert('tasks', t);
   syncLinks('task', id);
@@ -94,6 +141,8 @@ function editTask(id) {
   qs('#taskDeadline').value = t.deadline || '';
   qs('#taskMilestone').value = t.milestoneId || '';
   Array.from(qs('#taskDependsOn').options).forEach((o) => (o.selected = (t.deps || []).includes(o.value)));
+  currentSubtasks = JSON.parse(JSON.stringify(t.subtasks || []));
+  renderSubtaskEditor();
   qs('#taskBacklinks').innerHTML = renderBacklinksHTML('task', id);
   openModal('taskModal');
 }
@@ -369,6 +418,9 @@ function setupEventDelegation() {
     const date = target.getAttribute('data-date');
     const entityType = target.getAttribute('data-entity-type');
     const entityId = target.getAttribute('data-entity-id');
+    const idx = target.getAttribute('data-idx');
+    const subtaskId = target.getAttribute('data-subtask-id');
+    const taskId = target.getAttribute('data-task-id');
 
     e.stopPropagation();
     switch (action) {
@@ -389,6 +441,9 @@ function setupEventDelegation() {
       case 'editFin': editFin(id); break;
       case 'delFin': delFin(id); break;
       case 'openEntity': openEntity(entityType, entityId); break;
+      case 'toggleSubtaskEditor': toggleSubtaskInEditor(Number(idx)); break;
+      case 'removeSubtask': removeSubtask(Number(idx)); break;
+      case 'toggleSubtaskList': toggleSubtaskInList(taskId, subtaskId); break;
     }
   });
 
@@ -419,6 +474,10 @@ function setupEventDelegation() {
       toggleTask(target.getAttribute('data-id'));
     } else if (action === 'toggleHabit') {
       toggleHabitLog(target.getAttribute('data-habit-id'), target.getAttribute('data-date'));
+    } else if (action === 'toggleSubtaskEditor') {
+      toggleSubtaskInEditor(Number(target.getAttribute('data-idx')));
+    } else if (action === 'toggleSubtaskList') {
+      toggleSubtaskInList(target.getAttribute('data-task-id'), target.getAttribute('data-subtask-id'));
     }
   });
 }
@@ -525,6 +584,33 @@ export function initApp(user) {
 
   const pomoStopBtn = qs('#pomoStopBtn');
   if (pomoStopBtn) pomoStopBtn.onclick = stopPomo;
+
+  // Duration selector buttons
+  document.querySelectorAll('.pomo-dur-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.pomo-dur-btn').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      const durInput = qs('#pomoDurCustom');
+      if (durInput) durInput.value = '';
+      setDuration(Number(btn.getAttribute('data-dur')));
+    });
+  });
+  const pomoDurCustom = qs('#pomoDurCustom');
+  if (pomoDurCustom) pomoDurCustom.addEventListener('change', () => {
+    const v = Number(pomoDurCustom.value);
+    if (v >= 1 && v <= 120) {
+      document.querySelectorAll('.pomo-dur-btn').forEach((b) => b.classList.remove('active'));
+      setDuration(v);
+    }
+  });
+
+  // Subtask buttons
+  const addSubtaskBtn = qs('#addSubtaskBtn');
+  if (addSubtaskBtn) addSubtaskBtn.onclick = addSubtask;
+  const subtaskInput = qs('#subtaskInput');
+  if (subtaskInput) subtaskInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); addSubtask(); }
+  });
 
   // Zen mode
   const zenBtn = qs('#zenBtn');

@@ -217,6 +217,13 @@
         <div class="focus-grid">
           <div class="card zen-focus-card" style="text-align:center;padding:60px 20px;">
             <div class="pomo-display" style="font-size:5rem;font-family:'JetBrains Mono',monospace;font-weight:800;color:var(--primary);line-height:1;margin-bottom:24px;" id="pomoDisplay">25:00</div>
+            <div id="pomoDurSelector" class="zen-hide" style="display:flex;justify-content:center;align-items:center;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
+              <button class="pomo-dur-btn" data-dur="15">15m</button>
+              <button class="pomo-dur-btn active" data-dur="25">25m</button>
+              <button class="pomo-dur-btn" data-dur="45">45m</button>
+              <button class="pomo-dur-btn" data-dur="50">50m</button>
+              <input type="number" id="pomoDurCustom" min="1" max="120" placeholder="自定义" style="width:72px;text-align:center;font-size:0.85rem;padding:6px 8px;">
+            </div>
             <div style="margin-bottom:32px;font-weight:600;color:var(--text-muted)" id="pomoCurrentTask">请先在右侧选择/创建专注任务</div>
             <div style="display:flex;justify-content:center;gap:16px;">
               <button class="btn btn-primary" id="pomoStartBtn">开始专注</button>
@@ -345,6 +352,14 @@
           <div>
             <label class="form-label">前置依赖(Ctrl多选)</label>
             <select id="taskDependsOn" multiple style="height:90px;background:var(--bg-hover)"></select>
+          </div>
+          <div>
+            <label class="form-label">子任务清单</label>
+            <div id="subtaskList" style="margin-bottom:8px"></div>
+            <div style="display:flex;gap:8px">
+              <input type="text" id="subtaskInput" placeholder="输入子任务名称..." style="flex:1">
+              <button type="button" class="btn btn-ghost" id="addSubtaskBtn" style="white-space:nowrap">+ 添加</button>
+            </div>
           </div>
           <div id="taskBacklinks"></div>
         </div>
