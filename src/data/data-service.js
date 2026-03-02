@@ -66,6 +66,21 @@ function toSnake(obj) {
   return result;
 }
 
+// Columns that are DATE or UUID type — empty strings must become null
+const nullableNonText = new Set([
+  'deadline', 'milestone_id', 'start_date', 'end_date',
+  'task_id', 'habit_id', 'date', 'completed_at',
+]);
+
+function sanitizeRow(row) {
+  for (const key of Object.keys(row)) {
+    if (nullableNonText.has(key) && row[key] === '') {
+      row[key] = null;
+    }
+  }
+  return row;
+}
+
 // Collection → table name
 const collectionTable = {
   tasks: 'tasks', papers: 'papers', memos: 'memos',
@@ -115,7 +130,7 @@ function loadPendingFromStorage() {
 async function remoteUpsert(collection, item) {
   const supabase = getSupabase();
   const table = collectionTable[collection];
-  const row = toSnake(item);
+  const row = sanitizeRow(toSnake(item));
   row.user_id = userId;
   const { error } = await supabase.from(table).upsert(row, { onConflict: 'id' });
   if (error) console.error(`Upsert error (${table}):`, error);
