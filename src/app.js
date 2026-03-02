@@ -135,16 +135,15 @@ function delHabit(id) {
 
 function toggleHabitLog(hId, date) {
   const data = dataService.getData();
-  const i = data.habitLogs.findIndex((l) => l.id === hId && l.date === date);
+  const i = data.habitLogs.findIndex((l) => l.habitId === hId && l.date === date);
   if (i > -1) {
     const log = data.habitLogs[i];
-    dataService.remove('habitLogs', log._rowId || log.id);
-    // Also remove from memory since habitLogs use id as habit_id
+    dataService.remove('habitLogs', log.id);
     data.habitLogs.splice(i, 1);
   } else {
-    const log = { id: hId, date, _rowId: uuid() };
+    const log = { id: uuid(), habitId: hId, date };
     data.habitLogs.push(log);
-    dataService.upsert('habitLogs', { id: log._rowId, habitId: hId, date });
+    dataService.upsert('habitLogs', log);
   }
   renderHabits();
   renderDash();

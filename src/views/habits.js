@@ -32,7 +32,7 @@ export function renderHabits() {
   }
 
   c.innerHTML = data.habits.map((h) => {
-    const logs = new Set(data.habitLogs.filter((l) => l.id === h.id).map((l) => l.date));
+    const logs = new Set(data.habitLogs.filter((l) => l.habitId === h.id).map((l) => l.date));
     let streak = 0;
     for (let i = dates.length - 1; i >= 0; i--) {
       if (logs.has(dates[i])) streak++;

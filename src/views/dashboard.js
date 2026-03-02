@@ -17,7 +17,7 @@ export function renderDash() {
   wk.setDate(wk.getDate() - 7);
   const weekP = data.pomoRecords.filter((r) => new Date(r.date) >= wk).length;
   const td = today();
-  const habDone = data.habits.filter((h) => data.habitLogs.some((l) => l.id === h.id && l.date === td)).length;
+  const habDone = data.habits.filter((h) => data.habitLogs.some((l) => l.habitId === h.id && l.date === td)).length;
 
   qs('#statTotal').innerText = total;
   qs('#statTodo').innerText = todoC;
@@ -80,7 +80,7 @@ export function renderDash() {
   // Habits today
   qs('#dashHabitList').innerHTML = data.habits.length
     ? data.habits.map((h) => {
-        const d = data.habitLogs.some((l) => l.id === h.id && l.date === td);
+        const d = data.habitLogs.some((l) => l.habitId === h.id && l.date === td);
         return '<div class="list-item"><input type="checkbox" class="custom-check" ' + (d ? 'checked' : '') + ' data-action="toggleHabit" data-habit-id="' + h.id + '" data-date="' + td + '"><div class="item-content"><div class="item-title">' + esc(h.name) + '</div></div></div>';
       }).join('')
     : '<div style="color:var(--text-muted);padding:12px">尚未设置习惯</div>';
